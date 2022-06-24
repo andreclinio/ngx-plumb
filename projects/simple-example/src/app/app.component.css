@@ -1,0 +1,17 @@
+html, body {
+  height: 100vh;
+}
+
+.container {
+  height: 90vh;
+  border: 1px solid grey;
+  display: flex;
+  flex-direction: row;
+}
+
+.screen {
+  height: 400px;
+  width: 600px;
+  padding: 10px;
+  border: 1px solid blue;
+}
