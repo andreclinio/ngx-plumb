@@ -13,4 +13,8 @@ export class AppComponent {
 
   ngOnInit() : void {
   }
+
+  clickedElement(id: string) {
+    console.info("App clicked at:", id);
+  }
 }

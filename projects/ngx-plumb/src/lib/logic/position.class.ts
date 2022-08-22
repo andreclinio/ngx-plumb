@@ -10,7 +10,7 @@ export class Position {
     this.y = y;
   }
 
-  translated(tx: number, ty: number): Position {
+  translate(tx: number, ty: number): Position {
     return new Position(this.x + tx, this.y + ty);
   }
 }

@@ -1,55 +1,94 @@
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnInit, Renderer2, RendererFactory2, SimpleChanges } from '@angular/core';
 import { NodeDefinition } from '../../logic/node-definition.class';
-import { EVENT_DRAG_START, EVENT_DRAG_STOP, EVENT_DRAG_MOVE } from "@jsplumb/browser-ui"
+import { EVENT_DRAG_START, EVENT_DRAG_STOP, EVENT_DRAG_MOVE, EVENT_ELEMENT_MOUSE_DOWN, EVENT_ELEMENT_CLICK, EVENT_ELEMENT_TAP, EVENT_ELEMENT_MOUSE_UP } from "@jsplumb/browser-ui"
 import { EndpointOptions, JsPlumbInstance } from "@jsplumb/core"
+import { PointXY } from "@jsplumb/util"
 import { NodeInstance } from '../../logic/node-instance.class';
 import { NgxPlumbService } from '../../services/ngx-plumb.service';
+import { Position } from '../../logic/position.class';
+import { Dimension } from '../../logic/dimension.class';
 
 @Component({
   selector: 'ngx-plumb-node',
   templateUrl: './ngx-plumb-node.component.html',
-  styleUrls: ['./ngx-plumb-node.component.css']
+  styleUrls: ['./ngx-plumb-node.component.css'],
+  host: { '[id]': 'id' }
 })
 export class NgxPlumbNodeComponent implements OnInit {
 
-  source : EndpointOptions= {
+  source: EndpointOptions = {
     endpoint: 'Dot',
     maxConnections: 0
   };
 
+  private renderer: Renderer2;
+
   @Input() jsPlumbInstance!: JsPlumbInstance;
   @Input() nodeInstance!: NodeInstance;
+  @Input() screenElementRef!: ElementRef;
 
-  constructor(private elementRef: ElementRef, private x: NgxPlumbService) { }
+  constructor(private elementRef: ElementRef, private reanderFactory: RendererFactory2, private x: NgxPlumbService) {
+    this.renderer = reanderFactory.createRenderer(null, null);
+  }
 
   ngOnInit(): void {
     if (!this.jsPlumbInstance) throw ('NGX_PLUMB: No jsPlumb.jsPlumbInstance set!');
     if (!this.nodeInstance) throw ('NGX_PLUMB: No NodeInstance set!');
+    const nativeElement = this.elementRef.nativeElement;
+    const instanceId = this.nodeInstance.id;
+    // this.jsPlumbInstance.manage(nativeElement, `${instanceId}`);
+  
+    this.renderer.setProperty(nativeElement, "id", instanceId);
+    console.log("INIT", nativeElement, instanceId);
   }
 
   ngAfterViewInit(): void {
-    console.info("NGX");
-
-    const instanceId = this.nodeInstance.id; // this.nodeInstance!.id;
+    const instanceId = this.nodeInstance.id; 
     const nativeElement = this.elementRef.nativeElement;
-    this.jsPlumbInstance.manage(nativeElement, instanceId);
-    // this.x.getJsPlumbInstance().manage(nativeElement, instanceId);
+    // console.log("MANAGE", x, nativeElement, instanceId);
     this.jsPlumbInstance.addEndpoint(
       nativeElement,
-      { anchor: 'Right', uuid: instanceId + '-right', maxConnections: 1 }, 
+      { anchor: 'Right', uuid: instanceId + '-right', maxConnections: 1 },
       this.source);
 
-      this.jsPlumbInstance.addEndpoint(
-        nativeElement,
-        { anchor: 'Left', uuid: instanceId + '-left', maxConnections: 1, }, 
-        this.source);
-  
-    this.jsPlumbInstance.bind(EVENT_DRAG_MOVE, (info) => {
-      console.info(`${instanceId} -> ${JSON.stringify(info.pos)}`);
-    });
+    this.jsPlumbInstance.addEndpoint(
+      nativeElement,
+      { anchor: 'Left', uuid: instanceId + '-left', maxConnections: 1, },
+      this.source);
+      
+      const x = this.jsPlumbInstance.manage(nativeElement, `${instanceId}`);
   }
 
-  get ref() : ElementRef {
+  get position(): Position {
+    const nativeElement = this.elementRef.nativeElement;
+    const parentPoint = this.jsPlumbInstance.getOffset(this.screenElementRef.nativeElement);
+    const thisPoint = this.jsPlumbInstance.getOffset(nativeElement);
+    const x = thisPoint.x - parentPoint.x;
+    const y = thisPoint.y - parentPoint.y;
+    return new Position(x, y);
+  }
+
+  set position(position: Position) {
+    const parentPoint = this.jsPlumbInstance.getOffset(this.screenElementRef.nativeElement);
+    const x = parentPoint.x + position.x;
+    const y = parentPoint.y + position.y;
+    const nativeElement = this.elementRef.nativeElement;
+    this.jsPlumbInstance.setPosition(nativeElement, { x: x, y: y });
+    // this.renderer.setStyle(nativeElement, 'left', `${x}px`);
+    // this.renderer.setStyle(nativeElement, 'top', `${y}px`);
+    this.jsPlumbInstance.revalidate(nativeElement);
+  }
+
+  set dimension(dimension: Dimension) {
+    const nativeElement = this.elementRef.nativeElement;
+    const width = dimension.width;
+    const height = dimension.height;
+    this.renderer.setStyle(nativeElement, 'width', `${width}px`);
+    this.renderer.setStyle(nativeElement, 'height', `${height}px`);
+    this.jsPlumbInstance.revalidate(nativeElement);
+  }
+
+  get ref(): ElementRef {
     return this.elementRef;
   }
 }
