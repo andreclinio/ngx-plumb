@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, Renderer2, 
 import { BrowserJsPlumbInstance, ContainmentType, EVENT_CLICK, EVENT_DRAG_MOVE, EVENT_DRAG_STOP, EVENT_ELEMENT_CLICK, newInstance } from '@jsplumb/browser-ui';
 import { JsPlumbInstance, INTERCEPT_BEFORE_DETACH, INTERCEPT_BEFORE_DRAG, INTERCEPT_BEFORE_DROP, INTERCEPT_BEFORE_START_DETACH } from '@jsplumb/core';
 import { Box } from '../../logic/box.class';
+import { ConnectionInstance } from '../../logic/connection-instance';
 import { Dimension } from '../../logic/dimension.class';
 import { NodeDefinition } from '../../logic/node-definition.class';
 import { NodeInstance } from '../../logic/node-instance.class';
@@ -21,7 +22,8 @@ export class NgxPlumbScreenComponent implements OnInit {
 
   @ViewChild('nodeInstances', { read: ViewContainerRef, static: true }) viewContainerRef!: ViewContainerRef;
 
-  @Input() nodeInstances: NodeInstance[];
+  @Input() nodeInstances!: NodeInstance[];
+  @Input() connectionInstances!: ConnectionInstance[];
 
   @Input() editable: boolean;
 
@@ -34,14 +36,10 @@ export class NgxPlumbScreenComponent implements OnInit {
     this._renderer = factory.createRenderer(null, null);
     this.editable = false;
     this.zoom = 0.5;
-    const b1 = new Box(new Position(100, 100), new Dimension(100, 100));
-    const b2 = new Box(new Position(200, 200), new Dimension(50, 50));
-    this.nodeInstances = [new NodeInstance("A", NodeDefinition.NONE, b1), new NodeInstance("B", NodeDefinition.NONE, b2)];
     this._jsPlumbInstance = newInstance({
       container: this.elementRef.nativeElement,
       dragOptions: {
-        grid: {h: 20, w: 20}
-        
+        grid: { h: 20, w: 20 }
       }
     });
   }
@@ -58,9 +56,10 @@ export class NgxPlumbScreenComponent implements OnInit {
       this._jsPlumbInstance.setDraggable(elementRef.nativeElement, this.editable);
     });
 
+
     const hash = this._nativeElementToNodeInstance;
     this._jsPlumbInstance.bind(EVENT_ELEMENT_CLICK, (a: HTMLElement, e: PointerEvent) => {
-      console.info(`ELEMENT CLICK:`,a , e);
+      console.info(`ELEMENT CLICK:`, a, e);
       if (!a) return;
       const nativeElement = this._jsPlumbInstance.getManagedElement(a.id);
       console.info(`E CLICKED 1: `, a, a.id, nativeElement);
@@ -98,14 +97,16 @@ export class NgxPlumbScreenComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
+    this.connectionInstances.forEach(ci => {
+      const x = this.ngxPlumbService.getEndpoint(this._jsPlumbInstance, ci.source.nodeId, ci.source.endpointId);
+      const y = this.ngxPlumbService.getEndpoint(this._jsPlumbInstance, ci.target.nodeId, ci.target.endpointId);
       this._jsPlumbInstance.connect({
-        source: this._jsPlumbInstance.getManagedElement("A"),  
-        target: this._jsPlumbInstance.getManagedElement("B"),
+        source: x,
+        target: y,
       });
-    }, 3000);
-
+    });
   }
+
   ngOnChanges() {
   }
 }

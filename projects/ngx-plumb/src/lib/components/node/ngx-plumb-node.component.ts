@@ -12,14 +12,9 @@ import { Dimension } from '../../logic/dimension.class';
   selector: 'ngx-plumb-node',
   templateUrl: './ngx-plumb-node.component.html',
   styleUrls: ['./ngx-plumb-node.component.css'],
-  host: { '[id]': 'id' }
+  // host: { '[data-jtk-managed]': 'nodeInstance.id' }
 })
 export class NgxPlumbNodeComponent implements OnInit {
-
-  source: EndpointOptions = {
-    endpoint: 'Dot',
-    maxConnections: 0
-  };
 
   private renderer: Renderer2;
 
@@ -27,7 +22,9 @@ export class NgxPlumbNodeComponent implements OnInit {
   @Input() nodeInstance!: NodeInstance;
   @Input() screenElementRef!: ElementRef;
 
-  constructor(private elementRef: ElementRef, private reanderFactory: RendererFactory2, private x: NgxPlumbService) {
+  // id!: string;
+
+  constructor(private elementRef: ElementRef, private reanderFactory: RendererFactory2, private ngxPlumbService: NgxPlumbService) {
     this.renderer = reanderFactory.createRenderer(null, null);
   }
 
@@ -36,27 +33,21 @@ export class NgxPlumbNodeComponent implements OnInit {
     if (!this.nodeInstance) throw ('NGX_PLUMB: No NodeInstance set!');
     const nativeElement = this.elementRef.nativeElement;
     const instanceId = this.nodeInstance.id;
-    // this.jsPlumbInstance.manage(nativeElement, `${instanceId}`);
-  
-    this.renderer.setProperty(nativeElement, "id", instanceId);
+    // this.id = instanceId;
+    // this.jsPlumbInstance.manage(nativeElement, `XPTO-${instanceId}`);
+
+    // this.renderer.setProperty(nativeElement, "id", instanceId);
     console.log("INIT", nativeElement, instanceId);
   }
 
   ngAfterViewInit(): void {
-    const instanceId = this.nodeInstance.id; 
+    const instanceId = this.nodeInstance.id;
     const nativeElement = this.elementRef.nativeElement;
     // console.log("MANAGE", x, nativeElement, instanceId);
-    this.jsPlumbInstance.addEndpoint(
-      nativeElement,
-      { anchor: 'Right', uuid: instanceId + '-right', maxConnections: 1 },
-      this.source);
-
-    this.jsPlumbInstance.addEndpoint(
-      nativeElement,
-      { anchor: 'Left', uuid: instanceId + '-left', maxConnections: 1, },
-      this.source);
-      
-      const x = this.jsPlumbInstance.manage(nativeElement, `${instanceId}`);
+    const x = { endpoint: 'Dot', maxConnections: 11 };
+    this.ngxPlumbService.addEndpoint(this.jsPlumbInstance, nativeElement, instanceId, 'right', 'Right', x);
+    this.ngxPlumbService.addEndpoint(this.jsPlumbInstance, nativeElement, instanceId, 'left', 'Left', x);
+    console.log("AFTER", nativeElement, instanceId);
   }
 
   get position(): Position {
