@@ -1,9 +1,10 @@
 <div class="container">
   <ngx-plumb-screen class="screen" 
-  [editable]="true" 
   [nodeInstances]="nodeInstances"
   [connectionInstances]="connectionInstances"
   (clickedElement)="clickedElement($event)" 
+  (doubleClickedElement)="doubleClickedElement($event)" 
+
   [style.background]="'white'">
 </ngx-plumb-screen>
   <!-- <ngx-plumb-screen class="screen" [editable]="false"></ngx-plumb-screen> -->

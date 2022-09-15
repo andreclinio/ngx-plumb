@@ -16,7 +16,7 @@ import { Dimension } from '../../logic/dimension.class';
 })
 export class NgxPlumbNodeComponent implements OnInit {
 
-  private renderer: Renderer2;
+  private _renderer: Renderer2;
 
   @Input() jsPlumbInstance!: JsPlumbInstance;
   @Input() nodeInstance!: NodeInstance;
@@ -24,8 +24,8 @@ export class NgxPlumbNodeComponent implements OnInit {
 
   // id!: string;
 
-  constructor(private elementRef: ElementRef, private reanderFactory: RendererFactory2, private ngxPlumbService: NgxPlumbService) {
-    this.renderer = reanderFactory.createRenderer(null, null);
+  constructor(private elementRef: ElementRef, private renderFactory: RendererFactory2, private ngxPlumbService: NgxPlumbService) {
+    this._renderer = renderFactory.createRenderer(null, null);
   }
 
   ngOnInit(): void {
@@ -41,13 +41,7 @@ export class NgxPlumbNodeComponent implements OnInit {
   }
 
   ngAfterViewInit(): void {
-    const instanceId = this.nodeInstance.id;
-    const nativeElement = this.elementRef.nativeElement;
-    // console.log("MANAGE", x, nativeElement, instanceId);
-    const x = { endpoint: 'Dot', maxConnections: 11 };
-    this.ngxPlumbService.addEndpoint(this.jsPlumbInstance, nativeElement, instanceId, 'right', 'Right', x);
-    this.ngxPlumbService.addEndpoint(this.jsPlumbInstance, nativeElement, instanceId, 'left', 'Left', x);
-    console.log("AFTER", nativeElement, instanceId);
+    this._updateEndpoints();
   }
 
   get position(): Position {
@@ -74,12 +68,22 @@ export class NgxPlumbNodeComponent implements OnInit {
     const nativeElement = this.elementRef.nativeElement;
     const width = dimension.width;
     const height = dimension.height;
-    this.renderer.setStyle(nativeElement, 'width', `${width}px`);
-    this.renderer.setStyle(nativeElement, 'height', `${height}px`);
+    this._renderer.setStyle(nativeElement, 'width', `${width}px`);
+    this._renderer.setStyle(nativeElement, 'height', `${height}px`);
     this.jsPlumbInstance.revalidate(nativeElement);
   }
 
   get ref(): ElementRef {
     return this.elementRef;
   }
+
+  _updateEndpoints(): void {
+    const instanceId = this.nodeInstance.id;
+    const definition = this.nodeInstance.nodeDefinition;
+    const nativeElement = this.elementRef.nativeElement;
+    definition.endpointDefinitions.forEach( ed => {
+      this.ngxPlumbService.addEndpoint(this.jsPlumbInstance, nativeElement, instanceId, ed.id, ed.anchorId, ed.endpointOptions);
+    });
+  }
+
 }
